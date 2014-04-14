@@ -1,0 +1,382 @@
+#!/usr/bin/env python
+
+#*********TIGER v1.02*************
+
+#...read in options...
+import time
+lt_S = time.localtime()
+import sys
+import random
+import re
+from tiger_fns_102 import *
+options = sys.argv
+
+formRate = 0
+formSort = 0
+binNo = 10
+file = ""
+rate_file = ""
+write_rates = False
+numbered = False
+
+doPTP = False
+rands = 100
+pval = 0.05
+
+write_pvals = False
+pval_file = ""
+
+unknown = ["?"]
+
+if len(options) < 2:
+    printHelp()
+    sys.exit(0)
+
+for opt in range(len(options)):
+    if options[opt] == "-in":
+        file_name = options[opt + 1]
+        try:
+            file = open(file_name)
+        except IOError:
+            print "File \"" + file_name + "\" not found..."
+            sys.exit(0)
+
+    elif options[opt] == "-b":
+        binNo = int(options[opt + 1])
+
+    elif options[opt] == "-f":
+        formOpts = options[opt + 1].split(",")
+        if "r" in formOpts:
+            formRate = 1
+        if "s" in formOpts:
+            formSort = 1
+        if "c" in formOpts:
+            numbered = True
+
+    elif options[opt] == "-v":
+        print "TIGER version 1.02"
+        sys.exit(0)
+
+    elif options[opt] == "-rl":
+	write_rates = True
+        try:
+            rate_file = options[opt+1]
+            if rate_file[0] == "-":
+                print "\n\nPlease specify file name for -rl option.\n\n"
+                sys.exit(0)
+        except IndexError:
+            print "\n\nPlease specify file name for -rl option.\n\n"
+            sys.exit(0)
+
+    elif options[opt] == "-pl":
+        write_pvals = True
+        try:
+            pval_file = options[opt+1]
+            if pval_file[0] == "-":
+                print "\n\nPlease specify file name for -pl option.\n\n"
+                sys.exit(0)
+        except IndexError:
+            print "\n\nPlease specify file name for -pl option.\n\n"
+            sys.exit(0)
+
+    elif options[opt] == "-ptp":
+        doPTP = True
+
+    elif options[opt] == "-z":
+        rands = int(options[opt+1])
+
+    elif options[opt] == "-p":
+        pval = float(options[opt+1])
+
+    elif options[opt] == "-u":
+        unknown = options[opt+1].split(",")
+
+
+
+if not file:
+    print "No file specified (-in option)"
+    sys.exit(0)
+
+
+#Parse .aln file
+names = []
+seqs = []
+if ">" in file.readline():
+    tmp = FastaParse(file_name)
+else:
+    print """
+    *******************************
+     File not in correct format!  
+     TIGER accepts FastA format.
+    *******************************
+    """
+    sys.exit(0)
+
+import re
+names = tmp[0]
+for x, nm in (enumerate(names)):
+    names[x] = re.sub(" ", "", nm)
+seqs = tmp[1]
+
+lns = [len(l) for l in seqs]
+lns.sort()
+if lns[0] != lns[-1]:
+    print "\n\nUneven sequence lengths. Ensure sequences have been aligned!\n\n"
+    sys.exit(0)
+
+
+datatype = DNAdetect(seqs[0])
+
+#Create array of site patterns
+patterns = []
+sites = []
+comp_Pats = []
+comp_Sites = []
+for i in range(len(seqs[0])):
+    sites.append("".join([j[i] for j in seqs]))
+    patterns.append(getPattern(sites[-1], unknown))
+    if patterns[-1] not in comp_Pats:
+        comp_Pats.append(patterns[-1])
+        comp_Sites.append(sites[-1])
+
+#print comp_Pats
+
+#Compare character patterns and score
+ranks = range(len(patterns))
+comp_ranks = []
+keep = []
+br = ""
+if doPTP:
+    comp_disagree = []
+    disagree = range(len(patterns))
+
+for aa, patA in enumerate(comp_Pats):
+    #print "aa: %d\tpatA: %s" % (aa, patA)
+    if re.search("\|", patA):
+        cfl = scoreConflict(patterns.index(comp_Pats[aa]), patA, patterns)
+        comp_ranks.append(1.0 - cfl)
+    else:
+        comp_ranks.append(1.0)
+
+    if doPTP:
+        dis = 0
+        for z in range(rands):
+            patJ = jumblePattern(comp_Sites[aa], unknown)
+            scr = scoreConflict(aa, patJ, patterns)
+            #check if site has higher conflict score than original site
+            if scr >= (1.0 - comp_ranks[aa]):
+                dis += 1
+
+        dis = float(dis)/float(rands)
+        comp_disagree.append(dis)
+
+    
+    i = -1
+    try:
+        while 1:
+            i = patterns.index(patA, i + 1)
+            ranks[i] = comp_ranks[aa]
+            if doPTP:
+                disagree[i] = comp_disagree[aa]
+    except ValueError:
+        pass
+
+#Output total alignment score to file alnRate.txt
+if write_rates:
+    handle = open(rate_file, 'w')
+    handle.write("\n".join([str(r) for r in ranks]))
+    handle.close()
+
+if write_pvals and not doPTP:
+    outF.write("-ptp option not selected. No p-values to write!")
+
+
+#Find significant sites
+if doPTP:
+    sig_dis = []
+    for x in range(len(disagree)):
+        if disagree[x] < pval:
+            sig_dis.append(x+1)
+
+    if write_pvals:
+        outF = open(pval_file, 'w')
+        for d in range(len(disagree)):
+            outF.write(str(disagree[d]))
+            if (d+1) in sig_dis:
+                outF.write(" *")
+            outF.write("\n")
+
+
+#BINNING
+maxRank = max(ranks)
+minRank = min(ranks)
+
+binStr = []
+for numb, r in enumerate(ranks):
+    if 1 > 0:
+        binParts = []
+        for mult in range(binNo + 1):
+            binParts.append(minRank + (((maxRank - minRank)/binNo)*mult))
+        binParts.reverse()
+        for bin in range(1, len(binParts)):
+            if r < binParts[bin - 1] and r >= binParts[bin]:
+                binStr.append(str(bin))
+                break
+            elif round(r, 5) == round(maxRank, 5):
+                binStr.append("1")
+                break
+
+
+#Make names equal lengths
+filler = " "*20
+filled_names = names[:]
+for n, nm in enumerate(names):
+    nm_r = re.sub("[\s]+", "_", nm)
+    if len(nm_r) > 20:
+        filled_names[n] = nm_r[1] + "_" + nm_r[-18:]
+    else:
+        filled_names[n] = nm_r+ filler[:(20 -len(nm_r))]
+
+
+#print in correct format.... :(
+print "#NEXUS\n\n[This file contains data that has been analysed for site specific rates]"
+print "[using TIGER, developed by Carla Cummins in the laboratory of]"
+print "[Dr James McInerney, National University of Ireland, Maynooth]\n\n"
+
+print "[Histograms of number of sites in each category:]"        
+Hnames = []
+counts = []
+for b in range(binNo):
+    Hnames.append("Bin" + str(b+1) + "\t")
+    counts.append(binStr.count(str(b+1)))
+histogram(counts, Hnames)
+
+print "\n\n"
+
+print "\n\n\nBEGIN TAXA;"
+print "\tDimensions NTax = ", len(seqs), ";"
+print "\tTaxLabels ", " ".join(filled_names), ";\nEND;\n"
+
+print "BEGIN CHARACTERS;"
+print "\tDimensions nchar = ", len(seqs[0]), ";"
+print "\tFormat datatype = ", datatype, " gap = - interleave;\nMatrix\n"
+
+
+sorted = range(len(seqs[0]))
+if formSort == 1:
+    sorted = range(len(ranks))
+    sr = ranks[:]
+    sr.sort()
+    sr.reverse()
+    s = 0
+    sortD = {}
+    for x in range(len(ranks)):
+        ind = sr.index(ranks[x])
+        sortD[x] = ind
+        sorted[ind] = x
+        sr[ind] = "|"
+
+    print sortD
+
+
+    if doPTP:
+        sig_sorted = []
+        for d in sig_dis:
+            sig_sorted.append(sortD[d-1]+1)
+        sig_dis = sig_sorted
+
+for xy in range(0, len(seqs[0]), 60):
+    for xz in range(len(seqs)):
+        ln = filled_names[xz] + "\t"
+        
+        if len(seqs[xz][xy:]) < 60:
+            for i in sorted[xy:]:
+                ln = ln + seqs[xz][i].upper()
+        else:
+            for j in sorted[xy:xy+60]:
+                ln = ln + seqs[xz][j].upper()
+
+        print ln
+    
+    if formRate == 0:
+        for x in range(len(str(binNo))):
+            if x == 0:
+                bnls = "[Bin Numbers        \t"
+            else:
+                bnls = "[" + filler + "\t"
+                
+            for y in range(xy, (xy + 60)):
+                if y < len(binStr):
+                    if len(binStr[sorted[y]]) - 1 < x:
+                        bnls = bnls + " "
+                    else:
+                        s = sorted[y]
+                        bnls = bnls + str(binStr[s])[x]
+                else:
+                    break
+            print bnls + "]"
+
+    else:
+        for c in range(5):
+            if c == 0:
+                rtls = "[Rank Values        \t"
+            else:
+                rtls = "[" + filler + "\t"
+            for d in range(xy, (xy + 60)):
+                if d < len(ranks):
+                    if len(str(ranks[sorted[d]])) - 1 < c:
+                        rtls = rtls + " "
+                    else:
+                        rtls = rtls + str(ranks[sorted[d]])[c]
+                else:
+                    break
+            print rtls + "]"
+
+    if numbered:
+        digits = len(str(len(sorted)))
+        srted = sorted[:]
+        for sn, sv in enumerate(srted):
+            if len(str(sv)) < digits:
+                srted[sn] = str(sv) + " "*(digits-len(str(sv)))
+        for c in range(digits):
+            if c == 0:
+                colnms = "[Column Numbers     \t"
+            else:
+                colnms = "[" + filler + "\t"
+            nms = [str(n)[c] for n in srted[xy:xy+60]]
+            colnms += "".join(nms)
+            print colnms + "]"
+
+
+
+    print "\n"
+print "\n"
+
+print ";\nEND;\n\nBEGIN PAUP;"
+if formSort:
+    lower_bound = 1
+    for c in range(1, binNo + 1):
+        amt = binStr.count(str(c))
+        if amt > 0:
+            charset =  "\tCharset Bin" + str(c) + " = "
+            upper_bound = lower_bound + (binStr.count(str(c))) - 1
+            charset = charset + str(lower_bound) + "-" + str(upper_bound) + ";"
+            lower_bound = upper_bound + 1
+            print charset
+else:
+    for x in range(1, binNo + 1):
+        tmpL = []
+        if str(x) in binStr:
+            for y in range(len(binStr)):
+                if str(binStr[y]) == str(x):
+                    tmpL.append(str(y + 1))
+            print "\tCharset Bin" + str(x) + " = ", " ".join(tmpL) + ";"
+
+if doPTP:
+    print "\tCharset Sig_Disagreement = " + " ".join([str(i) for i in sig_dis]) + ";"
+
+print "END;"
+
+lt_F = time.localtime()
+print "[START TIME:", lt_S[3], ":", lt_S[4],":", lt_S[5], "]"
+print "[FINISH TIME:", lt_F[3], ":", lt_F[4],":", lt_F[5], "]"

@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+
+import sys
+import re
+
+regres = False
+inc = False
+
+if len(sys.argv) < 2 or "-h" in sys.argv:
+    print """
+    StripBin - Remove charsets from your dataset
+    -in <file> : pass file to work on. NEXUS format with PAUP block
+    -excl <cs> : define charsets to be excluded (separated by spaces if >1)
+    -incl <cs> : define charsets to be included (separated by spaces if >1)
+
+    Note: The -excl and -incl options cannot be used together as they are mutually exclusive.
+    """
+    sys.exit(0)
+
+if sys.argv[1] == "-in":
+    fileNm = sys.argv[2]
+
+
+if sys.argv[3] == "-excl":
+    rem_sets = sys.argv[4:]
+elif sys.argv[3] == "-incl":
+    inc = True
+    keep_sets = sys.argv[4:]
+else:
+    regres = True
+
+
+try:
+    f_o = open(fileNm, 'U')
+    file = f_o.readlines()
+except IOError:
+    print "File \"" + file_name + "\" not found..."
+    sys.exit(0)
+
+
+dict = {}
+charsets = {}
+NBkey = ""
+ordered = []
+
+matrix = False
+paup = False
+
+for line in file:
+    if matrix:
+        if len(line)>3 and line[:4] != "END;":
+            data = re.search("(\S+)\s+([A-Za-z\-\?]+)", line)
+            if data:
+                dg1 = data.group(1)
+                dg1 = re.sub("\s+", "", dg1)
+                dg2 = data.group(2)
+                if dg1 in taxs:
+                    if dg1 not in ordered:
+                        ordered.append(dg1)
+                        dict[dg1] = dg2
+                    else:
+                        dict[dg1] += dg2
+        if line[:4] == "END;":
+            matrix = False
+    
+    if paup:
+        set = re.search("Charset (.+) = ([0-9\ ]+)", line)
+        if set:
+            chst = set.group(1)
+            lst = set.group(2)
+            charsets[chst] = lst
+            if line[:4] == "END;":
+                paup = False
+            
+    
+    if re.search("TaxLabels", line):
+        save = re.sub("[\s]+", "|", line)
+        taxs = save.split("|")
+        taxs = taxs[2:-2]
+    elif re.search("Matrix", line):
+        matrix = True
+    elif re.search("BEGIN PAUP", line):
+        paup = True
+
+
+if inc:
+    rem_sets = []
+    for k in charsets.keys():
+        if k not in keep_sets:
+            rem_sets.append(k)
+
+
+
+for set in rem_sets:
+    if set in charsets.keys():
+        sites = charsets[set].split(" ")
+        sites = sites[1:]
+        for s in range(len(sites)):
+            try:
+                sites[s] = int(sites[s]) - 1
+            except ValueError:
+                print ""
+
+        for st in sites:
+            for tx in range(len(taxs)):
+                dict[taxs[tx]] = dict[taxs[tx]][:st] + "|" + dict[taxs[tx]][st+1:]
+            
+    else:
+        print "*******************\nCharset " + set + " does not exist...\n*******************"
+
+
+for k in dict.keys():
+    tmp = re.sub("\|+", "", dict[k])
+    dict[k] = tmp
+
+for t in ordered:
+    print ">" + t
+    print dict[t]

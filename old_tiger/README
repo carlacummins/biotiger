@@ -1,0 +1,16 @@
+TIGER v 1.02:
+
+Installation:
+
+* To install the TIGER software, simply copy the files "tiger" and 
+  "tiger_fns_102.py" to /usr/local/bin. This will allow access to 
+  the executable from any location in the filesystem.
+  
+* Please ensure that you are using Python version 2.5 or 2.6.
+
+
+  
+  
+* Type "tiger -h" for a full help menu.
+
+* Additional information is available in the supplied manual.
