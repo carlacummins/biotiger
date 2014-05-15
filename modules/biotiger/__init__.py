@@ -1,1 +1,1 @@
-__all__ = ["index", "rate", "combine", "strip"]
+__all__ = ["index", "rate", "output"]

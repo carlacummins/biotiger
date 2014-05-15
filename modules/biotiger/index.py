@@ -72,7 +72,6 @@ def pattern_counts_sets(pats):
 		try:
 			uniq[p]["count"] += 1
 		except KeyError:
-			#uniq[p] = {"count": 1, "set": set_pattern(p)}
 			uniq[p] = {"count": 1}
 
 		try:
@@ -82,9 +81,6 @@ def pattern_counts_sets(pats):
 
 
 	return uniq
-
-def set_pattern(p):
-	return [set([int(y) for y in x.split(',')]) for x in p.split('|')]
 
 def run(opts):
 	check_opts(opts)

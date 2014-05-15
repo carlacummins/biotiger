@@ -4,15 +4,13 @@ def check_opts(opts):
 	if opts.input is None:
 		die_with_help()
 	if not os.path.exists(os.path.realpath(opts.input)):
-		die_with_message("Cannot find file '%s'" % opts.input)
-	f = opts.format
-	if f is None or f not in ['0', '1', '2', '3']:
-		die_with_message("Invalid -f value: %s" % f)
-	if opts.bins is not None:
-		try:
-			int(opts.bins)
-		except ValueError:
-			die_with_message("Invalid -b option '%s'. Please provide an integer")
+		die_with_message("Cannot find input file '%s'" % opts.input)
+
+	if opts.reference is None:
+		die_with_help()
+	if not os.path.exists(os.path.realpath(opts.reference)):
+		die_with_message("Cannot find reference file '%s'" % opts.reference)
+
 	if opts.run_ptp is not None:
 		if opts.rands is not None:
 			try:
@@ -26,7 +24,7 @@ def check_opts(opts):
 				die_with_message("Invalid -p option '%s'. Please provide a floating point number")
 
 
-def rate_list(pat_counts, ref_counts):
+def rate_sites(pat_counts, ref_counts):
 	rate_d = pat_counts.copy()
 	for k in pat_counts.keys():
 		if "|" not in k:
@@ -93,6 +91,20 @@ def sort(rates, patterns):
 
 	return [ [ rates[o] for o in sort_order ], [ patterns[p] for p in sort_order ] ]
 
+def rate_list(pats):
+	rates = {}
+	for k in pats.keys():
+		r = pats[k]['rate']
+		for s in pats[k]['sites']:
+			rates[s] = r
+
+	rate_list = []
+	for i in range(len(pats)):
+		rate_list.append(pats[i])
+
+	return rate_list
+
+
 def run(opts):
 	check_opts(opts)
 
@@ -104,16 +116,32 @@ def run(opts):
 		with open(opts.reference, 'rb') as ref_h:
 			ref_counts = cPickle.load(ref_h)
 
-	rates = rate_list(pat_counts, ref_counts)
+	rates = rate_sites(pat_counts, ref_counts)
+	print rates
 
 	if opts.output is None:
 		prefix = gen_prefix(opts.input)
 	else:
 		prefix = opts.output
 
-	# write out .tgr pickle
+	# write out .gr pickle
 	with open("%s.gr" % prefix, 'wb') as fh:
 		cPickle.dump(rates, fh)
+
+	# write rate list if required
+	if opts.rate_list:
+		rate_list = rate_list(rates)
+		if opts.rate_list is None:
+			rl = "%s.rates" % prefix
+		else:
+			rl = opts.rate_list
+		rlh = open(rl, 'w')
+		rlh.write( "\n".join([str(x) for x in rate_list]) )
+		rlh.close()
+
+	# do PTP test if required
+	if opts.run_ptp:
+		continue
 
 
 def gen_prefix(input):
