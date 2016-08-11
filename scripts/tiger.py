@@ -28,7 +28,7 @@ def parse_args(args):
 
     elif mode == 'output':
         parser.add_argument('-i', '--input')
-        parser.add_argument('-f', '--fasta')
+        parser.add_argument('-fa', '--fasta')
         parser.add_argument('-o', '--output')
         parser.add_argument('-f', '--format', default='0')
         parser.add_argument('-inc', '--include_only')
@@ -51,6 +51,12 @@ TIGER  v2.0 Help:
 ****************
 
 TIGER: Tree-Independent Generation of Evolutionary Rates
+
+TIGER v2.0 is split into 3 modes, allowing for comparisons to be run concurrently.
+First, the input file needs to be broken down and indexed (index mode). It can be broken into many
+pieces, all of which can be compared on seperate processors. Next, the rate must be
+calculated for all sites (usually across multiple index files). Finally, the data can 
+be combined and output in a number of formats with masking options.
 
 Modes:
     index:    prepare the data for rate calculation, generate tiger index (.ti) file(s).
@@ -95,6 +101,8 @@ Modes:
                         file. 
                         -rl <file.txt> : writes list of the rates at each site to file.txt.
 
+                        Default is <input_file_prefix>.rates if no filename is specified
+
     -ptp                Specifies that a PTP test should be run. 
                         * Note * this option has a huge effect on running time!
 
@@ -112,8 +120,10 @@ Modes:
     -pl|pval_list       Write a list of p-values to a specified file.
                         -pl <file.txt>: writes list of p-values for each site to file.txt.
 
+                        Default is <input_file_prefix>.pval
+
     Examples:
-        1. Calculate rates for file test.ref.ti against itself, with a list of rates:
+        1. Calculate rates for file test.ref.ti against itself and create a file containing a list of rates:
             tiger rate -i test.ref.ti -rl
         2. Calculate rates for file test.0.ti against test.ref.ti with a PTP test and a list of p values
             tiger rate -i test.0.ti -r test.ref.ti -ptp -pl
@@ -143,7 +153,7 @@ Modes:
     -exc|exclude_only   Give list of charsets to exclude
                         -exc Bin1,Bin2,Bin9,Bin10
 
-    -m|mask             Mask -inc/-exc sites. (Default is to remove them)
+    -m|mask             Mask -inc/-exc sites rather than removing them (default)
 
     -b|bins             Set the number of bins to be used.
                         -b <int>: Sites will be placed into <int> number of bins. <int> is a whole number.
@@ -177,12 +187,9 @@ if mode == 'index':
 elif mode == 'rate':
     from biotiger import rate
     rate.run(opts)
-elif mode == 'combine':
-    from biotiger import combine
-    combine.run(opts)
-elif mode == 'strip':
-    from biotiger import strip
-    strip.run(opts)
+elif mode == 'output':
+    from biotiger import output
+    output.run(opts)
 
 # seq_data = biotiger.parse_fasta(opts.input_file)
 # seq_len = check_aln(seq_data)
