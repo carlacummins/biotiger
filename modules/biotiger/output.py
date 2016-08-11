@@ -3,10 +3,23 @@
 import re, sys, cPickle, os
 
 def check_opts(opts):
-	if opts.input is None:
+	# check files sanity
+	if opts.input is None and opts.combine is None:
 		die_with_help()
-	if not os.path.exists(os.path.realpath(opts.input)):
+	if opts.input is not None and opts.combine is not None:
+		die_with_message("--input and --combine options cannot be used together")
+
+	if opts.input is not None and not os.path.exists(os.path.realpath(opts.input)):
 		die_with_message("Cannot find file '%s'" % opts.input)
+	if opts.combine is not None and not os.path.exists(os.path.realpath(opts.combine)):
+		die_with_message("Cannot find file '%s'" % opts.combine)
+
+	if opts.fasta is None:
+		die_with_message("Please provide the original fasta file (--fasta)")
+	if not os.path.exists(os.path.realpath(opts.fasta)):
+		die_with_message("Cannot find fasta file %s" % opts.fasta)
+
+	# check format option sanity
 	f = opts.format
 	if f is None or f not in ['0', '1', '2', '3', '4']:
 		die_with_message("Invalid -f value: %s" % f)
@@ -16,20 +29,9 @@ def check_opts(opts):
 		except ValueError:
 			die_with_message("Invalid -b option '%s'. Please provide an integer" % opt.bins)
 	if opts.exclude_only is not None and opts.include_only is not None:
-		die_with_message("-inc and -exc options are mutually exclusive")
-	if not os.path.exists(os.path.realpath(opts.fasta)):
-		die_with_message("Cannot find fasta file %s" % opts.fasta)
-	# if opts.run_ptp is not None:
-	# 	if opts.rands is not None:
-	# 		try:
-	# 			int(opts.rands)
-	# 		except ValueError:
-	# 			die_with_message("Invalid -z option '%s'. Please provide an integer")
-	# 	if opts.p_value is not None:
-	# 		try:
-	# 			float(opts.p_value)
-	# 		except ValueError:
-	# 			die_with_message("Invalid -p option '%s'. Please provide a floating point number")
+		die_with_message("--include_only and -exclude_only options are mutually exclusive")
+	
+
 
 def bin(bin_no, rate_d):
 	rates = [rate_d[k]["rate"] for k in rate_d.keys()]
@@ -39,7 +41,7 @@ def bin(bin_no, rate_d):
 
 	step = (upper-lower)/bin_no
 	if step == 0:
-		die_with_message("Something is up")
+		die_with_message("The data is too homogeneous to bin! Congratulations...??")
 	bin_divs = []
 	d = lower
 	while d <= upper:
@@ -57,7 +59,7 @@ def bin(bin_no, rate_d):
 def get_bin(parts, rate):
 	for i in range(len(parts)-1):
 		if rate >= parts[i] and rate <= parts[i+1]:
-			return i+1
+			return (len(parts)-1)-i
 
 	
 def histogram(num_list, name_list):
@@ -102,7 +104,6 @@ def print_nexus(bins, seq_data, output_file, excl_bins, mask, format):
 # 	print "\tFormat datatype = ", datatype, " gap = - interleave;\nMatrix\n"
 
 def print_fasta(bins, seq_data, output_file, excl_bins, mask):
-	print "FASTA"
 	bin_map = map_bins_to_positions(bins)
 
 	for species in seq_data.keys():
@@ -113,7 +114,7 @@ def print_fasta(bins, seq_data, output_file, excl_bins, mask):
 			else:
 				masked_seq += base
 		
-		if mask:
+		if not mask:
 			final_seq = re.sub('X', '', masked_seq)
 		else:
 			final_seq = masked_seq
@@ -131,15 +132,19 @@ def map_bins_to_positions(bins):
 
 	return bin_map
 
-def run(opts):
-	check_opts(opts)
+def combine_rates(combine_file):
+	combine_fh = open(combine_file, 'r')
 
-	with open(opts.input, 'rb') as fh:
-		rates = cPickle.load(fh)
+	all_rates = {}
+	for rate_file in combine_fh:
+		rate_file = rate_file.rstrip()
+		with open(rate_file, 'rb') as fh:
+			these_rates = cPickle.load(fh)
+			all_rates.update(these_rates)
 
-	bins = bin(opts.bins, rates)
+	return all_rates
 
-	# create list of bins to mask/remove
+def bins_to_exclude(opts):
 	excl_bins = []
 	if ( opts.exclude_only is not None ):
 		excl_bins = [int(b) for b in opts.exclude_only.split(',')]
@@ -149,9 +154,11 @@ def run(opts):
 			if b not in incl_bins:
 				excl_bins.append(b)
 
-	# parse original fasta for seq data
+	return excl_bins
+
+def parse_fasta(fasta_file):
 	seq_data = {}
-	seq_fh = open(opts.fasta, 'r')
+	seq_fh = open(fasta_file, 'r')
 	for line in seq_fh:
 		line = line.rstrip()
 		if line[0] == '>':
@@ -159,6 +166,25 @@ def run(opts):
 			seq_data[cur_species] = ''
 		else:
 			seq_data[cur_species] += line
+
+	return seq_data
+
+def run(opts):
+	check_opts(opts)
+
+	if ( opts.input is not None ):
+		with open(opts.input, 'rb') as fh:
+			rates = cPickle.load(fh)
+	elif ( opts.combine is not None ):
+		rates = combine_rates(opts.combine)
+
+	bins = bin(opts.bins, rates)
+
+	# create list of bins to mask/remove
+	excl_bins = bins_to_exclude(opts)
+
+	# parse original fasta for seq data
+	seq_data = parse_fasta(opts.fasta)
 
 	# write output in specified format
 	if ( opts.format == '4' ): # output fasta

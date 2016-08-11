@@ -12,17 +12,17 @@ def check_opts(opts):
     if not os.path.exists(os.path.realpath(opts.reference)):
         die_with_message("Cannot find reference file '%s'" % opts.reference)
 
-    if opts.run_ptp is not None:
-        if opts.rands is not None:
-            try:
-                int(opts.rands)
-            except ValueError:
-                die_with_message("Invalid -z option '%s'. Please provide an integer")
-        if opts.p_value is not None:
-            try:
-                float(opts.p_value)
-            except ValueError:
-                die_with_message("Invalid -p option '%s'. Please provide a floating point number")
+    # if opts.run_ptp is not None:
+    #     if opts.rands is not None:
+    #         try:
+    #             int(opts.rands)
+    #         except ValueError:
+    #             die_with_message("Invalid -z option '%s'. Please provide an integer")
+    #     if opts.p_value is not None:
+    #         try:
+    #             float(opts.p_value)
+    #         except ValueError:
+    #             die_with_message("Invalid -p option '%s'. Please provide a floating point number")
 
 
 def rate_sites(pat_counts, ref_counts):
@@ -118,7 +118,6 @@ def run(opts):
             ref_counts = cPickle.load(ref_h)
 
     rates = rate_sites(pat_counts, ref_counts)
-    print rates
 
     if opts.output is None:
         prefix = gen_prefix(opts.input)

@@ -1,6 +1,6 @@
 import sys, os
+sys.path.append(os.path.realpath('../modules'))
 sys.path.append(os.path.realpath('./modules'))
-sys.path.append(os.path.realpath('.'))
 
 from biotiger import *
 import pytest, filecmp, tempfile, shutil

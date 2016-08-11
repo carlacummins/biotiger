@@ -15,10 +15,10 @@ def parse_args(args):
         parser.add_argument('-r', '--reference')
         parser.add_argument('-o', '--output')
         parser.add_argument('-rl', '--rate_list')
-        parser.add_argument('-ptp', '--run_ptp')
-        parser.add_argument('-z', '--randomisations')
-        parser.add_argument('-p', '--p_value', default=0.05)
-        parser.add_argument('-pl', '--pval_list')
+        # parser.add_argument('-ptp', '--run_ptp')
+        # parser.add_argument('-z', '--randomisations')
+        # parser.add_argument('-p', '--p_value', default=0.05)
+        # parser.add_argument('-pl', '--pval_list')
 
     elif mode == 'index':
         parser.add_argument('-i', '--input')
@@ -30,10 +30,11 @@ def parse_args(args):
         parser.add_argument('-i', '--input')
         parser.add_argument('-fa', '--fasta')
         parser.add_argument('-o', '--output')
-        parser.add_argument('-f', '--format', default='0')
+        parser.add_argument('-c', '--combine')
+        parser.add_argument('-f', '--format', default='4')
         parser.add_argument('-inc', '--include_only')
         parser.add_argument('-exc', '--exclude_only')
-        parser.add_argument('-m', '--mask', default=False)
+        parser.add_argument('-m', '--mask', dest='mask', action='store_true', default=False)
         parser.add_argument('-b', '--bins', default=10)
         
 
@@ -52,17 +53,25 @@ TIGER  v2.0 Help:
 
 TIGER: Tree-Independent Generation of Evolutionary Rates
 
-TIGER v2.0 is split into 3 modes, allowing for comparisons to be run concurrently.
-First, the input file needs to be broken down and indexed (index mode). It can be broken into many
-pieces, all of which can be compared on seperate processors. Next, the rate must be
-calculated for all sites (usually across multiple index files). Finally, the data can 
-be combined and output in a number of formats with masking options.
+Unlike the initial version, TIGER v2.0 is split into 3 modes, allowing for comparisons to be run
+concurrently.
+First, the input file needs to be broken down and indexed (index mode). It can be broken into as
+many pieces as you wish, all of which can be compared on seperate processors. An index file for
+the full dataset will be generated too, so that each piece can be compared back to it (reference 
+index).
+Next, the rate calculation must be performed (rate mode). Each index file should be compared to 
+the reference index.
+Finally, the data can be combined and output in a number of formats with masking options.
 
 Modes:
-    index:    prepare the data for rate calculation, generate tiger index (.ti) file(s).
-    rate:     preform calculation of tiger rate for each site, generate generated rates (.gr) file(s).
+    index:    prepare the data for rate calculation, generate 'tiger index' (.ti) file(s).
+    rate:     preform calculation of tiger rate for each site, create 'generated rates' (.gr) file(s).
     output:   write sequence files based on .gr files, integrate rates from a split analysis into a 
               single file, mask and edit alignment based on tiger rates.
+
+It may be noted that both .ti and .gr files are python cpickle dumps and can be browsed using iPython
+cpickle: https://docs.python.org/2/library/pickle.html#module-cPickle
+ipython: https://ipython.org/
 
 1. tiger index Options:
 
@@ -103,30 +112,11 @@ Modes:
 
                         Default is <input_file_prefix>.rates if no filename is specified
 
-    -ptp                Specifies that a PTP test should be run. 
-                        * Note * this option has a huge effect on running time!
-
-    -z|randomisations   Number of randomisations to be used for the PTP test. 
-                        -z <int>: each site will be randomised <int> times. <int> is a whole number.
-
-	                    Default is 100
-
-    -p|p_value          Specify p-value which denotes significance in PTP test.
-                        -p <float>: site will be denoted as significant if p-value is better than <float>.
-                        <float> is a floating point number.
-
-                        Default is 0.05
-
-    -pl|pval_list       Write a list of p-values to a specified file.
-                        -pl <file.txt>: writes list of p-values for each site to file.txt.
-
-                        Default is <input_file_prefix>.pval
-
     Examples:
         1. Calculate rates for file test.ref.ti against itself and create a file containing a list of rates:
             tiger rate -i test.ref.ti -rl
-        2. Calculate rates for file test.0.ti against test.ref.ti with a PTP test and a list of p values
-            tiger rate -i test.0.ti -r test.ref.ti -ptp -pl
+        2. Calculate rates for file test.0.ti against the reference index (test.ref.ti)
+            tiger rate -i test.0.ti -r test.ref.ti 
 
 3. tiger output Options:
     
@@ -140,18 +130,18 @@ Modes:
 
     -f|format           Changes formatting options.
                         NEXUS, with comments:
-                        -f 0: output bin numbers, sites unsorted (default)
+                        -f 0: output bin numbers, sites unsorted
                         -f 1: output bin number, sites sorted on rank
                         -f 2: displays rank values rather than bin numbers
                         -f 3: displays rank values and sites sorted on rank
-                        FastA:
+                        FastA (default):
                         -f 4
 
-    -inc|include_only   Give list of charsets to include
-                        -inc Bin3,Bin4,Bin5,Bin6 (Note: No spaces, just commas)
+    -inc|include_only   Give list of bins to include
+                        -inc 3,4,5,6 (Note: No spaces, just commas)
 
     -exc|exclude_only   Give list of charsets to exclude
-                        -exc Bin1,Bin2,Bin9,Bin10
+                        -exc 1,2,9,10
 
     -m|mask             Mask -inc/-exc sites rather than removing them (default)
 
@@ -161,7 +151,7 @@ Modes:
                         Default is 10.
     Examples:
         1.  Write a FastA file, masking site that fall into Bin1, Bin2, Bin9 and Bin10 of 10 bins:
-            tiger output -i sample.gr -fa my_data.fa -exc Bin1,Bin2,Bin9,Bin10 -b 10 --mask
+            tiger output -i sample.gr -fa my_data.fa -exc 1,2,9,10 -b 10 --mask
 
         2. Write a NEXUS file combining test.0.gr, test.1.gr, test.2.gr with sites sorted on rank
             tiger output -c list_of_gr_files.txt -fa my_data.fa -f 3
@@ -191,37 +181,27 @@ elif mode == 'output':
     from biotiger import output
     output.run(opts)
 
-# seq_data = biotiger.parse_fasta(opts.input_file)
-# seq_len = check_aln(seq_data)
-# patterns = biotiger.patterns(seq_data)
+# Options not yet implemented!!
+# """
+#     -ptp                Specifies that a PTP test should be run. 
+#                         * Note * this option has a huge effect on running time!
 
-# start = 0
-# end = seq_len
+#     -z|randomisations   Number of randomisations to be used for the PTP test. 
+#                         -z <int>: each site will be randomised <int> times. <int> is a whole number.
 
-# # single CPU for now..
-# rates = biotiger.rate(patterns)
+#                         Default is 100
 
-# # To think about: how to split tiger jobs into pieces...
-# #rates = biotiger.rate(patterns, start, end) ??
+#     -p|p_value          Specify p-value which denotes significance in PTP test.
+#                         -p <float>: site will be denoted as significant if p-value is better than <float>.
+#                         <float> is a floating point number.
 
-# # prepare info for printing
-# formatted_pats = patterns[:]
-# formatted_comm = rates[:]
-# bins = biotiger.bin(opts.bins, formatted_comm)
+#                         Default is 0.05
 
-# if opts.formatting in ['1', '3']: #i.e. needs sorting
-# 	[formatted_comm, formatted_pats] = biotiger.sort(formatted_comm, formatted_pats)
+#     -pl|pval_list       Write a list of p-values to a specified file.
+#                         -pl <file.txt>: writes list of p-values for each site to file.txt.
 
-# if opts.formatting in ['0', '1']:
-# 	formatted_comm = bins
-
-
-# histogram = biotiger.histogram(num_list, name_list)
-
-
-# print_nexus(taxon_names, formatted_pats, formatted_comm)
-
-
+#                         Default is <input_file_prefix>.pval
+# """
 
 
 

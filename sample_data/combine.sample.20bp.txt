@@ -1,0 +1,4 @@
+sample.20bp.0.gr
+sample.20bp.1.gr
+sample.20bp.2.gr
+sample.20bp.3.gr
