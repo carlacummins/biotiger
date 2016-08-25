@@ -126,7 +126,7 @@ ipython: https://ipython.org/
 
     -fa|fasta           Provide original .fa file for sequence data.
 
-    -o|output           Specify prefix name for output files.
+    -o|output           Specify prefix name for output files (prints to stdout if not provided)
 
     -f|format           Changes formatting options.
                         NEXUS, with comments:
