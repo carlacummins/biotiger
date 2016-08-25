@@ -1,7 +1,11 @@
 # TIGER v2.0: Tree-Independent Generation of Evolutionary Rates
 
+This page desecribes the software implementation of the TIGER method. For more information on the
+algorithm itself, please see our publication: http://sysbio.oxfordjournals.org/content/60/6/833.short
+
 Unlike the initial version, TIGER v2.0 is split into 3 modes, allowing for comparisons to be run
-concurrently.
+concurrently. This can prove very useful when running analyses on compute clusters and this software
+has been designed with job arrays in mind.
 
 First, the input file needs to be broken down and indexed (index mode). It can be broken into as
 many pieces as you wish, all of which can be compared on seperate processors. An index file for
@@ -9,9 +13,10 @@ the full dataset will be generated too, so that each piece can be compared back 
 index).
 
 Next, the rate calculation must be performed (rate mode). Each index file should be compared to 
-the reference index.
+the reference index and can be run independently of the other index files.
 
-Finally, the data can be combined and output in a number of formats with masking options.
+Finally, the data can be combined and output in a number of formats with options to mask or remove
+offending sites.
 
 ### Modes:
 * _index_:    prepare the data for rate calculation, generate 'tiger index' (`.ti`) file(s).
@@ -19,9 +24,11 @@ Finally, the data can be combined and output in a number of formats with masking
 * _output_:   write sequence files based on `.gr` files, integrate rates from a split analysis into a 
           single file, mask and edit alignment based on tiger rates.
 
-It may be noted that both `.ti` and `.gr` files are python cpickle dumps and can be browsed using iPython
-* cpickle: https://docs.python.org/2/library/pickle.html#module-cPickle
-* ipython: https://ipython.org/
+## Installation
+
+Tiger is very much a standalone package and can be used out-of-the-box by simply running the tiger executable
+
+## Using tiger
 
 ### tiger *index* options:
 
@@ -135,3 +142,17 @@ Set the number of bins to be used. `-b <int>` : Sites will be placed into `<int>
 ```bash
     tiger output -c list_of_gr_files.txt -fa my_data.fa -f 3
 ```
+
+## Tiger and Python
+
+Tiger has been written in python. The structure of the software is, essentially, a script calling modules from
+its sister package - biotiger. This, then, means that users of the software may avail of all the methods used
+to perform the tiger analysis.
+
+It may be noted that both `.ti` and `.gr` files are python cPickle dumps and can be loaded and browsed using iPython (or similar)
+* cPickle: https://docs.python.org/2/library/pickle.html#module-cPickle
+* iPython: https://ipython.org/
+
+### Examples
+
+
