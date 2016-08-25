@@ -194,7 +194,7 @@ def pad_str(taxon_names):
 
 	return padded
 
-def generate_fasta(binned_data, seq_data, output_file, excl_bins, mask):
+def generate_fasta(binned_data, seq_data, excl_bins, mask):
 	bin_map = map_bins_to_positions(binned_data)
 	fasta_str = ''
 
