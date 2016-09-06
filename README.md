@@ -8,9 +8,10 @@ concurrently. This can prove very useful when running analyses on compute cluste
 has been designed with job arrays in mind.
 
 First, the input file needs to be broken down and indexed (index mode). It can be broken into as
-many pieces as you wish, all of which can be compared on seperate processors. An index file for
-the full dataset will be generated too, so that each piece can be compared back to it (reference 
-index).
+many pieces as you wish, all of which can be compared on seperate processors. 
+Each site needs to be compared to every other site in the alignment for the rate calculation, so an index file for
+the full dataset will be generated too. Each piece must be compared to it (reference 
+index). This will be named like `*.ref.ti`
 
 Next, the rate calculation must be performed (rate mode). Each index file should be compared to 
 the reference index and can be run independently of the other index files.
@@ -19,10 +20,11 @@ Finally, the data can be combined and output in a number of formats with options
 offending sites.
 
 ### Modes:
+
 * _index_:    prepare the data for rate calculation, generate 'tiger index' (`.ti`) file(s).
 * _rate_:     preform calculation of tiger rate for each site, create 'generated rates' (`.gr`) file(s).
 * _output_:   write sequence files based on `.gr` files, integrate rates from a split analysis into a 
-          single file, mask and edit alignment based on tiger rates.
+          single file, mask and edit alignment based on tiger rates. Please note that this function will not really do anything unless an --excl or --incl option is specified.
 
 ## Installation
 
@@ -128,13 +130,13 @@ Give list of charsets to exclude. `-exc 1,2,9,10`
 
 `-m|mask`
 
-Mask `--include_only`/`--exclude_only` sites rather than removing them (default)
+Mask `--include_only`/`--exclude_only` sites rather than removing them (default).
 
 `-b|bins`
-Set the number of bins to be used. `-b <int>` : Sites will be placed into `<int>` number of bins. `<int>` is a whole number. Default is 10.
+Set the number of bins to be used. `-b <int>` : Sites will be placed into `<int>` number of bins. `<int>` is a whole number. Default is 10. Note: Bin 1 always contains constant sites only.
 
 **Examples:**
-1.  Write a FastA file, masking site that fall into Bin1, Bin2, Bin9 and Bin10 of 10 bins:
+1.  Write a FastA file, masking site that fall into bin 1, bin 2, bin 9 and bin 10 of 10 bins:
 ```bash
     tiger output -i sample.gr -fa my_data.fa -exc 1,2,9,10 -b 10 --mask
 ```
@@ -154,5 +156,4 @@ It may be noted that both `.ti` and `.gr` files are python cPickle dumps and can
 * iPython: https://ipython.org/
 
 ### Examples
-
 
