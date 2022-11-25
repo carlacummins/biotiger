@@ -139,40 +139,40 @@ def gen_prefix(input):
 	return o
 
 def die_with_help():
-    print """
-****************
-TIGER  v2.0 Help:
-****************
-
-tiger index Options:
-
-    -i|input    Specify input file. File must be in FastA format and must be aligned prior.
-                Datasets with uneven sequence lengths will return an error.
-
-    -s|split    Split dataset across multiple files to run simultaneously. Takes int argument.
-
-    -o|output   Specify the prefix name of output files.
-
-    -u|unknowns Specify unknown characters in the alignment. Unknown characters are omitted from 
-                site patterns and so are not considered in the analysis.
-                -u ?,-,*: defines ?, - and * as unknown characters. (*Be sure to put only a comma
-                between characters, NO SPACE!!)
-         
-                Default is ? only
-
-    Examples:
-        1. Generate a .tgr file for complete sequence named full_seq.tgr & set unknowns to ? and - :
-                tiger index -i my_file.aln -o full_seq -u ?,-
-
-        2. Generate 10 subsets of the data with an output prefix of tiger_split and a reference:
-                tiger index -i my_file.aln -o tiger_split -s 10
-            ** Results in files named tiger_split.1.tgr, tiger_split.2,tgr, and so on, along with
-               tiger_split.ref.tgr
-   
-     """
+    print("""
+    ****************
+    TIGER  v2.0 Help:
+    ****************
+    
+    tiger index Options:
+    
+        -i|input    Specify input file. File must be in FastA format and must be aligned prior.
+                    Datasets with uneven sequence lengths will return an error.
+    
+        -s|split    Split dataset across multiple files to run simultaneously. Takes int argument.
+    
+        -o|output   Specify the prefix name of output files.
+    
+        -u|unknowns Specify unknown characters in the alignment. Unknown characters are omitted from 
+                    site patterns and so are not considered in the analysis.
+                    -u ?,-,*: defines ?, - and * as unknown characters. (*Be sure to put only a comma
+                    between characters, NO SPACE!!)
+             
+                    Default is ? only
+    
+        Examples:
+            1. Generate a .tgr file for complete sequence named full_seq.tgr & set unknowns to ? and - :
+                    tiger index -i my_file.aln -o full_seq -u ?,-
+    
+            2. Generate 10 subsets of the data with an output prefix of tiger_split and a reference:
+                    tiger index -i my_file.aln -o tiger_split -s 10
+                ** Results in files named tiger_split.1.tgr, tiger_split.2,tgr, and so on, along with
+                   tiger_split.ref.tgr
+       
+         """)
     sys.exit(1)
 
 def die_with_message(message):
-	print message
+	print(message)
 	sys.exit(1)
 	

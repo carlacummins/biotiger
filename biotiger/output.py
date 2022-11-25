@@ -295,56 +295,56 @@ def run(opts):
 		except IOError:
 			die_with_message("Cannot open outfile %s%s" % (opts.output, suffix))
 	else:
-		print output_str
+		print(output_str)
 
 
 def die_with_help():
-	print """
-****************
-TIGER  v2.0 Help:
-****************
-
-tiger output Options:
+	print("""
+	****************
+	TIGER  v2.0 Help:
+	****************
 	
-	-i|input            Specify input file. Must be in .gr format.
-
-	-c|combine          Specify input file. This file should contain a list of .gr files to be combined.
-
-	-fa|fasta           Provide original .fa file for sequence data.
-
-	-o|output           Specify prefix name for output files (prints to stdout if not provided)
-
-	-f|format           Changes formatting options.
-						NEXUS, with comments:
-						-f 0: output bin numbers, sites unsorted (default)
-						-f 1: output bin number, sites sorted on rank
-						-f 2: displays rank values rather than bin numbers
-						-f 3: displays rank values and sites sorted on rank
-						FastA:
-						-f 4
-
-	-inc|include_only   Give list of bins to include (only) in output
-						-inc 3,4,5,6 (Note: No spaces, just commas)
-
-	-exc|exclude_only   Give list of bins to exclude from output
-						-exc 1,2,9,10
-
-	-m|mask             Mask -inc/-exc sites. (Default is to remove them)
-
-	-b|bins             Set the number of bins to be used.
-						-b <int>: Sites will be placed into <int> number of bins. <int> is a whole number.
-
-						Default is 10.
-	Examples:
-		1.  Write a FastA file, masking site that fall into Bin1, Bin2, Bin9 and Bin10 of 10 bins:
-			tiger output -i sample.gr -fa my_data.fa -f 4 -exc 1,2,9,10 -b 10 --mask
-
-		2. Write a NEXUS file combining test.0.gr, test.1.gr, test.2.gr with sites sorted on rank
-			tiger output -c list_of_gr_files.txt -fa my_data.fa -f 3
-   
-	 """
+	tiger output Options:
+		
+		-i|input            Specify input file. Must be in .gr format.
+	
+		-c|combine          Specify input file. This file should contain a list of .gr files to be combined.
+	
+		-fa|fasta           Provide original .fa file for sequence data.
+	
+		-o|output           Specify prefix name for output files (prints to stdout if not provided)
+	
+		-f|format           Changes formatting options.
+							NEXUS, with comments:
+							-f 0: output bin numbers, sites unsorted (default)
+							-f 1: output bin number, sites sorted on rank
+							-f 2: displays rank values rather than bin numbers
+							-f 3: displays rank values and sites sorted on rank
+							FastA:
+							-f 4
+	
+		-inc|include_only   Give list of bins to include (only) in output
+							-inc 3,4,5,6 (Note: No spaces, just commas)
+	
+		-exc|exclude_only   Give list of bins to exclude from output
+							-exc 1,2,9,10
+	
+		-m|mask             Mask -inc/-exc sites. (Default is to remove them)
+	
+		-b|bins             Set the number of bins to be used.
+							-b <int>: Sites will be placed into <int> number of bins. <int> is a whole number.
+	
+							Default is 10.
+		Examples:
+			1.  Write a FastA file, masking site that fall into Bin1, Bin2, Bin9 and Bin10 of 10 bins:
+				tiger output -i sample.gr -fa my_data.fa -f 4 -exc 1,2,9,10 -b 10 --mask
+	
+			2. Write a NEXUS file combining test.0.gr, test.1.gr, test.2.gr with sites sorted on rank
+				tiger output -c list_of_gr_files.txt -fa my_data.fa -f 3
+	   
+		 """)
 	sys.exit(1)
 
 def die_with_message(message):
-	print message
+	print(message)
 	sys.exit(1)

@@ -81,7 +81,7 @@ def set_pattern(p):
 
 def sort(rates, patterns):
     if len(rates) != len(patterns):
-        print "Something's weird here. len(rates) != len(patterns)"
+        print("Something's weird here. len(rates) != len(patterns)")
         sys.exit(1)
 
     rate_d = {}
@@ -160,51 +160,51 @@ def gen_prefix(input):
     return o
 
 def die_with_help():
-    print """
-****************
-TIGER  v2.0 Help:
-****************
-
-tiger rate Options:
-
-    -i|input            Specify input file. File should be in .ti format.
-
-    -r|reference        Specify reference sequence (.ti). -i file is used as default if none is provided.
-
-    -o|output           Specify prefix name for output files.
+    print("""
+    ****************
+    TIGER  v2.0 Help:
+    ****************
     
-    -rl|rate_list       A list of the rate at each site may be optionally written to a specified
-                        file. 
-                        -rl <file.txt> : writes list of the rates at each site to file.txt.
-
-    -ptp                Specifies that a PTP test should be run. 
-                        * Note * this option has a huge effect on running time!
-
-    -z|randomisations   Number of randomisations to be used for the PTP test. 
-                        -z <int>: each site will be randomised <int> times. <int> is a whole number.
-
-                        Default is 100
-
-    -p|p_value          Specify p-value which denotes significance in PTP test.
-                        -p <float>: site will be denoted as significant if p-value is better than <float>.
-                        <float> is a floating point number.
-
-                        Default is 0.05
-
-    -pl|pval_list       Write a list of p-values to a specified file.
-                        -pl <file.txt>: writes list of p-values for each site to file.txt.
-
-    Examples:
-        1. Calculate rates for file test.ref.ti against itself, with a list of rates:
-            tiger rate -i test.ref.ti -rl
-        2. Calculate rates for file test.0.ti against test.ref.ti with a PTP test and a list of p values
-            tiger rate -i test.0.ti -r test.ref.ti -ptp -pl
-      
-     """
+    tiger rate Options:
+    
+        -i|input            Specify input file. File should be in .ti format.
+    
+        -r|reference        Specify reference sequence (.ti). -i file is used as default if none is provided.
+    
+        -o|output           Specify prefix name for output files.
+        
+        -rl|rate_list       A list of the rate at each site may be optionally written to a specified
+                            file. 
+                            -rl <file.txt> : writes list of the rates at each site to file.txt.
+    
+        -ptp                Specifies that a PTP test should be run. 
+                            * Note * this option has a huge effect on running time!
+    
+        -z|randomisations   Number of randomisations to be used for the PTP test. 
+                            -z <int>: each site will be randomised <int> times. <int> is a whole number.
+    
+                            Default is 100
+    
+        -p|p_value          Specify p-value which denotes significance in PTP test.
+                            -p <float>: site will be denoted as significant if p-value is better than <float>.
+                            <float> is a floating point number.
+    
+                            Default is 0.05
+    
+        -pl|pval_list       Write a list of p-values to a specified file.
+                            -pl <file.txt>: writes list of p-values for each site to file.txt.
+    
+        Examples:
+            1. Calculate rates for file test.ref.ti against itself, with a list of rates:
+                tiger rate -i test.ref.ti -rl
+            2. Calculate rates for file test.0.ti against test.ref.ti with a PTP test and a list of p values
+                tiger rate -i test.0.ti -r test.ref.ti -ptp -pl
+          
+         """)
     sys.exit(1)
 
 def die_with_message(message):
-    print message
+    print(message)
     sys.exit(1)
 
 
